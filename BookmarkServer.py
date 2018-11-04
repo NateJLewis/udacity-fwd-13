@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import threading
+from socketserver import ThreadingMixIn
 import os
 import http.server
 import requests
@@ -26,6 +28,8 @@ form = '''<!DOCTYPE html>
 </pre>
 '''
 
+class ThreadHTTPServer(ThreadingMixIn, http.server.HTTPServer):
+    "This is an HTTPServer that supports thread-based concurrency."
 
 def CheckURI(uri, timeout=5):
     '''Check whether this URI is reachable, i.e. does it return a 200 OK?
@@ -38,8 +42,6 @@ def CheckURI(uri, timeout=5):
         return req.status_code == 200
     except requests.RequestException:
         return False
-
-
 
 class Shortener(http.server.BaseHTTPRequestHandler):
     # GET Request
@@ -112,5 +114,5 @@ if __name__ == '__main__':
     # User PORT from OS Env Var's or PORT 8000
     port = int(os.environ.get('PORT', 8000))
     server_address = ('', port)
-    httpd = http.server.HTTPServer(server_address, Shortener)
+    httpd = ThreadHTTPServer(server_address, Shortener)
     httpd.serve_forever()
